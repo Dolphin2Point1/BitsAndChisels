@@ -1,6 +1,7 @@
 package io.github.coolmineman.bitsandchisels;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -51,17 +52,17 @@ public class BitNbtUtil {
     }
 
     public static void write3DBitArray(NbtCompound tag, BlockState[][][] in) {
-        ArrayList<BlockState> palette = new ArrayList<>();
+        HashMap<BlockState, Short> stateToShort = new HashMap<>();
         byte[] bits = new byte[8192];
         int arrayIndex = 0;
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++) {
                 for (int k = 0; k < 16; k++) {
                     BlockState state = in[i][j][k];
-                    short index = (short) palette.indexOf(state);
-                    if (index == -1) {
-                        palette.add(state);
-                        index = (short) (palette.size() - 1);
+                    Short index = stateToShort.get(state);
+                    if (index == null) {
+                        index = (short)(stateToShort.size() - 1);
+                        stateToShort.put(state, index);
                     }
                     bits[arrayIndex] = (byte)(index & 0xff);
                     bits[arrayIndex + 1] = (byte)((index >> 8) & 0xff);
@@ -71,7 +72,7 @@ public class BitNbtUtil {
         }
         tag.put("bits_v2", new NbtByteArray(bits));
         NbtList palletteTag = new NbtList();
-        for (BlockState state : palette) {
+        for (BlockState state : stateToShort.keySet()) {
             palletteTag.add(BitNbtUtil.fromBlockState(state));
         }
         tag.put("palette", palletteTag);
